@@ -1,0 +1,10 @@
+server.port: 10000
+
+spring.datasource.driver-class-name: org.mariadb.jdbc.Driver
+spring.datasource.username: property-api
+spring.datasource.password: password
+spring.datasource.url: jdbc:mariadb://localhost:3306/property_api
+
+spring.jpa.database-platform: org.hibernate.dialect.MariaDBDialect
+spring.jpa.show-sql: true
+spring.jpa.hibernate.ddl-auto: update
