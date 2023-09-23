@@ -1,6 +1,6 @@
-package org.example.application;
+package edonalds.application;
 
-import org.example.model.Listing;
+import edonalds.model.Listing;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.repository.CrudRepository;
 

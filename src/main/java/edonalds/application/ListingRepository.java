@@ -1,6 +1,6 @@
-package org.example.application;
+package edonalds.application;
 
-import org.example.model.Listing;
+import edonalds.model.Listing;
 
 import java.util.List;
 

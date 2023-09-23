@@ -1,10 +1,13 @@
-package org.example.application;
+package edonalds.application;
 
-import org.example.model.Listing;
-import org.example.model.Size;
+import edonalds.model.Listing;
+import edonalds.model.Size;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Repository
@@ -14,6 +17,7 @@ public class InMemoryListingRepository implements ListingRepository {
     public InMemoryListingRepository() {
         listings.add(new Listing(
                 1L,
+                OffsetDateTime.now(),
                 "Agency 1",
                 "Apartment 1",
                 "Street 1",
@@ -25,6 +29,7 @@ public class InMemoryListingRepository implements ListingRepository {
                 2));
         listings.add(new Listing(
                 2L,
+                OffsetDateTime.now(),
                 "Agency 1",
                 "Apartment 2",
                 "Street 2",
@@ -36,6 +41,7 @@ public class InMemoryListingRepository implements ListingRepository {
                 1));
         listings.add(new Listing(
                 3L,
+                OffsetDateTime.now(),
                 "Agency 2",
                 "Apartment 3",
                 "Street 3",

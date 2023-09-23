@@ -1,0 +1,10 @@
+[Unit] 
+Description=Property API service 
+ 
+[Service] 
+ExecStart=/home/properties/.sdkman/candidates/java/current/bin/java -jar -Dspring.profiles.active=prod /home/properties/property-api/build/libs/property-api.jar 
+User=properties 
+
+[Install] 
+WantedBy=multi-user.target 
+

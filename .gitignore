@@ -3,5 +3,10 @@
 /workspace.xml
 .gradle
 .idea
-gradle
+.eclipse
+.factorypath
+.classpath
+.project
+.settings
 build
+bin

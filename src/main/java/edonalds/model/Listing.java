@@ -1,18 +1,25 @@
-package org.example.model;
+package edonalds.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+
+import java.time.OffsetDateTime;
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@EntityListeners(CreatedListener.class)
 public class Listing {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @CreatedDate
+    @Temporal(TemporalType.TIMESTAMP)
+    private OffsetDateTime created;
     private String agency;
     private String name;
     private String address;
@@ -41,4 +48,6 @@ public class Listing {
         }
         return false;
     }
+
+
 }

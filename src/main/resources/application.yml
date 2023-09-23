@@ -2,9 +2,11 @@ server.port: 10000
 
 spring.datasource.driver-class-name: org.mariadb.jdbc.Driver
 spring.datasource.username: property-api
-spring.datasource.password: password
-spring.datasource.url: jdbc:mariadb://localhost:3306/property_api
+spring.datasource.password: ${PROPERTY_API_DB_PASSWORD}
+spring.datasource.url: jdbc:mariadb://${PROPERTY_API_DB_HOST}:${PROPERTY_API_DB_PORT}/property_api
 
 spring.jpa.database-platform: org.hibernate.dialect.MariaDBDialect
 spring.jpa.show-sql: true
 spring.jpa.hibernate.ddl-auto: update
+
+security.apiKey: ${PROPERTY_API_APIKEY}

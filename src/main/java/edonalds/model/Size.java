@@ -1,4 +1,4 @@
-package org.example.model;
+package edonalds.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
