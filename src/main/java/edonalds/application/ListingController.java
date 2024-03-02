@@ -1,6 +1,8 @@
 package edonalds.application;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +31,8 @@ public class ListingController {
 
     @GetMapping
     public List<Listing> getListings() {
-        return repository.findAll();
+        var r = repository.findByDeletedOrderByFirstSeenDesc(false);
+        return r;
     }
 
     @PutMapping
@@ -41,25 +44,35 @@ public class ListingController {
             return ResponseEntity.status(401).build();
         }
 
-        var currentListings = repository.findAll();
-        var updatedListings = new ArrayList<Listing>();
+        var currentListings = repository.findByDeletedOrUrlInOrderByFirstSeenDesc(false, listingsParam.stream().map(l -> l.getUrl()).toList());
 
-        for (var listing : listingsParam) {
-            for (Listing currentListing : currentListings) {
-                if (currentListing.equals(listing)) {
-                    listing.setId(currentListing.getId());
-                    break;
-                }
-            }
-            updatedListings.add(listing);
+        // Delete
+        currentListings.stream()
+                .filter(cl -> !listingsParam.contains(cl))
+                .forEach(cl -> {
+                    System.out.println("Deleting");
+                    cl.setDeleted(true);
+                });
+
+        // Add
+        var listingsToAdd = new ArrayList<>(listingsParam);
+        listingsToAdd.removeAll(currentListings);
+        currentListings.addAll(listingsToAdd);
+
+        // Update
+        for (Listing currentListing : currentListings) {
+            listingsParam.stream()
+                    .filter(listingParam -> listingParam.equals(currentListing))
+                    .findFirst()
+                    .ifPresent(listingParam -> {
+                        currentListing.updatePrice(listingParam.getPrice());
+                        currentListing.setDeleted(false);
+                    });
         }
-        var listingsToDelete = currentListings.stream()
-                .filter(l -> listingsParam.stream().noneMatch(lp -> lp.equals(l)))
-                .toList();
 
-        repository.deleteAll(listingsToDelete);
-        repository.saveAll(updatedListings);
+        currentListings.forEach(l -> l.setLastSeen(OffsetDateTime.now()));
 
+        repository.saveAll(currentListings);
         return ResponseEntity.ok().build();
     }
 }

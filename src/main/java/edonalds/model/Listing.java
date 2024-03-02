@@ -3,51 +3,62 @@ package edonalds.model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import java.time.OffsetDateTime;
+import java.util.Collection;
 
 @Entity
+@Table(indexes = @Index(name = "idx_url", columnList = "url"))
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EntityListeners(CreatedListener.class)
+@EntityListeners(DateListener.class)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Listing {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @CreatedDate
     @Temporal(TemporalType.TIMESTAMP)
-    private OffsetDateTime created;
+    private OffsetDateTime firstSeen;
+    @Temporal(TemporalType.TIMESTAMP)
+    private OffsetDateTime lastSeen;
+    @Temporal(TemporalType.TIMESTAMP)
+    private OffsetDateTime lastUpdated;
     private String agency;
     private String name;
     private String address;
+    @EqualsAndHashCode.Include
     private String url;
     private Integer price;
     @Embedded
     private Size size;
+    @Column(name = "build_year")
     private Integer year;
     private Float monthlyCharge;
     private Integer rooms;
+    private boolean deleted;
 
-    @Override
-    public boolean equals(Object object) {
-        if (object == null) {
-            return false;
+    @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private Collection<PriceChange> priceHistory;
+
+    public void updatePrice(Integer newPrice) {
+        if (!newPrice.equals(this.price)) {
+            var oldPrice = new PriceChange();
+            oldPrice.setLastSeen(lastSeen);
+            oldPrice.setPrice(this.price);
+            oldPrice.setListing(this);
+
+            this.priceHistory.add(oldPrice);
+            this.price = newPrice;
         }
-        if (object.getClass() != this.getClass()) {
-            return false;
-        }
-        Listing other = (Listing) object;
-        if (this.id != null && this.id.equals(other.id)) {
-            return true;
-        }
-        if (this.url != null && this.url.equals(other.url)) {
-            return true;
-        }
-        return false;
+
     }
-
-
 }

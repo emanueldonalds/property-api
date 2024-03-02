@@ -1,12 +1,34 @@
 server.port: 10000
+security.apiKey: ${PROPERTY_API_APIKEY}
 
 spring.datasource.driver-class-name: org.mariadb.jdbc.Driver
+spring.datasource.url: jdbc:mariadb://${PROPERTY_API_DB_HOST}:${PROPERTY_API_DB_PORT}/property_api
 spring.datasource.username: property-api
 spring.datasource.password: ${PROPERTY_API_DB_PASSWORD}
-spring.datasource.url: jdbc:mariadb://${PROPERTY_API_DB_HOST}:${PROPERTY_API_DB_PORT}/property_api
+
+spring.jackson.serialization.write-dates-as-timestamps: false
+spring.jackson.default-property-inclusion: 
+  - always 
+  - non_null
 
 spring.jpa.database-platform: org.hibernate.dialect.MariaDBDialect
 spring.jpa.show-sql: true
 spring.jpa.hibernate.ddl-auto: update
 
-security.apiKey: ${PROPERTY_API_APIKEY}
+
+---
+
+spring.config.activate.on-profile: in-mem
+
+security.apiKey: abc123
+
+spring.datasource.driver-class-name: org.h2.Driver
+spring.datasource.url: jdbc:h2:mem:db
+spring.datasource.username: property-api
+spring.datasource.password: assword
+
+spring.jpa.database-platform: org.hibernate.dialect.H2Dialect
+spring.jpa.show-sql: true
+spring.jpa.hibernate.ddl-auto: update
+
+spring.h2.console.enabled: true
