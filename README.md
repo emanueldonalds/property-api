@@ -6,7 +6,7 @@ This API collects currently listed properties for sale on Åland, with links to 
 
 ##  Run
 
-### Using memory database:
+### Using in-memory db:
 `./gradlew run --args="--spring.profiles.active=in-mem"`
 
 ### Using MariaDb

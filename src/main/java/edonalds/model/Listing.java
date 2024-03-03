@@ -50,15 +50,20 @@ public class Listing {
     private Collection<PriceChange> priceHistory;
 
     public void updatePrice(Integer newPrice) {
-        if (!newPrice.equals(this.price)) {
-            var oldPrice = new PriceChange();
-            oldPrice.setLastSeen(lastSeen);
-            oldPrice.setPrice(this.price);
-            oldPrice.setListing(this);
-
-            this.priceHistory.add(oldPrice);
-            this.price = newPrice;
+        if (newPrice == null && this.price == null) {
+            return;
         }
+        if (newPrice != null && newPrice.equals(this.price)) {
+            return;
+        }
+
+        var oldPrice = new PriceChange();
+        oldPrice.setLastSeen(lastSeen);
+        oldPrice.setPrice(this.price);
+        oldPrice.setListing(this);
+
+        this.priceHistory.add(oldPrice);
+        this.price = newPrice;
 
     }
 }

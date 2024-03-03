@@ -1,6 +1,8 @@
 server.port: 10000
 security.apiKey: ${PROPERTY_API_APIKEY}
 
+logging.level.root: WARN
+
 spring.datasource.driver-class-name: org.mariadb.jdbc.Driver
 spring.datasource.url: jdbc:mariadb://${PROPERTY_API_DB_HOST}:${PROPERTY_API_DB_PORT}/property_api
 spring.datasource.username: property-api
@@ -12,7 +14,6 @@ spring.jackson.default-property-inclusion:
   - non_null
 
 spring.jpa.database-platform: org.hibernate.dialect.MariaDBDialect
-spring.jpa.show-sql: true
 spring.jpa.hibernate.ddl-auto: update
 
 
