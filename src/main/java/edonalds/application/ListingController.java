@@ -24,7 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import edonalds.model.Listing;
 import edonalds.model.ListingsQuery;
+import edonalds.model.ScrapeEvent;
 import edonalds.persistence.ListingsRepository;
+import edonalds.persistence.ScrapeHistoryRepository;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.validation.Valid;
@@ -33,29 +35,55 @@ import jakarta.validation.Valid;
 @RequestMapping("/listings")
 public class ListingController {
     private final String apiKey;
-    private final ListingsRepository repository;
+    private final ScrapeHistoryRepository scrapeHistoryRepo;
+    private final ListingsRepository listingsRepo;
 
-    public ListingController(ListingsRepository repository, @Value("${security.apiKey}") String apiKey) {
-        this.repository = repository;
+    public ListingController(ScrapeHistoryRepository scrapeHistoryRepo, ListingsRepository listingsRepo, @Value("${security.apiKey}") String apiKey) {
+        this.scrapeHistoryRepo = scrapeHistoryRepo;
+        this.listingsRepo = listingsRepo;
         this.apiKey = apiKey;
     }
 
     @GetMapping
-    public List<Listing> getListings(@Valid ListingsQuery filter) {
-        var pageable = PageRequest.of(0, filter.limit());
+    public List<Listing> getListings(@Valid ListingsQuery query) {
+        var pageable = PageRequest.of(0, query.limit());
 
-        var listings = repository.findAll((root, query, builder) -> {
+        var listings = listingsRepo.findAll((root, criteriaQuery, builder) -> {
             var predicates = new ArrayList<Predicate>();
 
-            predicates.add(builder.equal(root.get("deleted"), filter.deleted()));
+            predicates.add(builder.equal(root.get("deleted"), query.deleted()));
 
-            if (filter.id() != null) {
-                predicates.add(builder.equal(root.get("id"), filter.id()));
+            if (query.id() != null) {
+                predicates.add(builder.equal(root.get("id"), query.id()));
             }
 
-            if (filter.agency() != null) {
+            if (query.agency() != null) {
                 Expression<String> agencyExpr = root.get("agency");
-                predicates.add(agencyExpr.in(filter.agency()));
+                predicates.add(agencyExpr.in(query.agency()));
+            }
+
+            if (query.minPrice() != null) {
+                predicates.add(builder.greaterThanOrEqualTo(root.get("price"), query.minPrice()));
+            }
+
+            if (query.maxPrice() != null) {
+                predicates.add(builder.lessThanOrEqualTo(root.get("price"), query.maxPrice()));
+            }
+
+            if (query.minRooms() != null) {
+                predicates.add(builder.greaterThanOrEqualTo(root.get("rooms"), query.minRooms()));
+            }
+
+            if (query.maxRooms() != null) {
+                predicates.add(builder.lessThanOrEqualTo(root.get("rooms"), query.maxRooms()));
+            }
+
+            if (query.orderByDesc() != null) {
+                criteriaQuery.orderBy(builder.desc(root.get(query.orderByDesc())));
+            }
+
+            if (query.orderByAsc() != null) {
+                criteriaQuery.orderBy(builder.asc(root.get(query.orderByAsc())));
             }
 
             return builder.and(predicates.toArray(new Predicate[0]));
@@ -73,16 +101,18 @@ public class ListingController {
             return ResponseEntity.status(401).build();
         }
 
-        var currentListings = repository.findByDeletedOrUrlInOrderByFirstSeenDesc(false,
+        var currentListings = listingsRepo.findByDeletedOrUrlIn(
+                false,
                 listingsParam.stream().map(l -> l.getUrl()).toList());
 
         // Delete
-        currentListings.stream()
+        var toDelete = currentListings.stream()
                 .filter(cl -> !listingsParam.contains(cl))
-                .forEach(cl -> {
-                    System.out.println("Deleting");
-                    cl.setDeleted(true);
-                });
+                .collect(Collectors.toList());
+
+        toDelete.forEach(cl -> {
+            cl.setDeleted(true);
+        });
 
         // Add
         var listingsToAdd = new ArrayList<>(listingsParam);
@@ -90,19 +120,30 @@ public class ListingController {
         currentListings.addAll(listingsToAdd);
 
         // Update
-        for (Listing currentListing : currentListings) {
+        var listingsToUpdate = currentListings.stream()
+                .filter(cl -> listingsParam.stream()
+                        .anyMatch(lp -> lp.equals(cl)))
+                .collect(Collectors.toList());
+
+        for (Listing listingToUpdate : listingsToUpdate) {
             listingsParam.stream()
-                    .filter(listingParam -> listingParam.equals(currentListing))
+                    .filter(listingParam -> listingParam.equals(listingToUpdate))
                     .findFirst()
                     .ifPresent(listingParam -> {
-                        currentListing.updatePrice(listingParam.getPrice());
-                        currentListing.setDeleted(false);
+                        listingToUpdate.updatePrice(listingParam.getPrice());
                     });
         }
 
         currentListings.forEach(l -> l.setLastSeen(OffsetDateTime.now()));
 
-        repository.saveAll(currentListings);
+        long nAdded = listingsToAdd.size();
+        long nUpdated = listingsToUpdate.size();
+        long nDeleted = toDelete.size();
+        var scrapeEvent = new ScrapeEvent(nAdded, nUpdated, nDeleted);
+
+        listingsRepo.saveAll(currentListings);
+        scrapeHistoryRepo.save(scrapeEvent);
+
         return ResponseEntity.ok().build();
     }
 

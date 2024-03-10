@@ -11,7 +11,6 @@ import java.util.List;
 
 @Primary
 public interface ListingsRepository extends CrudRepository<Listing, Long>, JpaSpecificationExecutor<Listing> {
-    List<Listing> findByDeletedOrderByFirstSeenDesc(boolean deleted);
-    List<Listing> findByDeletedOrUrlInOrderByFirstSeenDesc(boolean deleted, Collection<String> urls);
     List<Listing> findAll(Specification<Listing> spec);
+    List<Listing> findByDeletedOrUrlIn(boolean deleted, Collection<String> urls);
 }
