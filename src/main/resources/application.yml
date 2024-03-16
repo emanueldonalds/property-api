@@ -1,7 +1,8 @@
 server.port: 10000
 security.apiKey: ${PROPERTY_API_APIKEY}
 
-logging.level.root: WARN
+logging.level.root: TRACE
+logging.file.name: /var/log/app/property-api.log
 
 spring.datasource.driver-class-name: org.mariadb.jdbc.Driver
 spring.datasource.url: jdbc:mariadb://${PROPERTY_API_DB_HOST}:${PROPERTY_API_DB_PORT}/property_api
