@@ -1,7 +1,7 @@
 server.port: 10000
 security.apiKey: ${PROPERTY_API_APIKEY}
 
-logging.level.root: TRACE
+logging.level.root: WARN
 logging.file.name: /var/log/app/property-api.log
 
 spring.datasource.driver-class-name: org.mariadb.jdbc.Driver
@@ -19,6 +19,7 @@ spring.jpa.hibernate.ddl-auto: update
 
 
 ---
+logging.level.root: WARN
 
 spring.config.activate.on-profile: in-mem
 

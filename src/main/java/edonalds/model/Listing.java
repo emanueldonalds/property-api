@@ -18,7 +18,7 @@ import java.util.Collection;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EntityListeners(DateListener.class)
+@EntityListeners(ListingsDateListener.class)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Listing {
     @Id
