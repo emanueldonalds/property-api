@@ -22,11 +22,13 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import edonalds.model.GetListingsResponse;
 import edonalds.model.Listing;
 import edonalds.model.ListingsQuery;
 import edonalds.model.ScrapeEvent;
 import edonalds.persistence.ListingsRepository;
 import edonalds.persistence.ScrapeHistoryRepository;
+import edonalds.utils.StringUtils;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.validation.Valid;
@@ -38,17 +40,18 @@ public class ListingController {
     private final ScrapeHistoryRepository scrapeHistoryRepo;
     private final ListingsRepository listingsRepo;
 
-    public ListingController(ScrapeHistoryRepository scrapeHistoryRepo, ListingsRepository listingsRepo, @Value("${security.apiKey}") String apiKey) {
+    public ListingController(ScrapeHistoryRepository scrapeHistoryRepo, ListingsRepository listingsRepo,
+            @Value("${security.apiKey}") String apiKey) {
         this.scrapeHistoryRepo = scrapeHistoryRepo;
         this.listingsRepo = listingsRepo;
         this.apiKey = apiKey;
     }
 
     @GetMapping
-    public List<Listing> getListings(@Valid ListingsQuery query) {
+    public GetListingsResponse getListings(@Valid ListingsQuery query) {
         var pageable = PageRequest.of(0, query.limit());
 
-        var listings = listingsRepo.findAll((root, criteriaQuery, builder) -> {
+        var listingsPage = listingsRepo.findAll((root, criteriaQuery, builder) -> {
             var predicates = new ArrayList<Predicate>();
 
             predicates.add(builder.equal(root.get("deleted"), query.deleted()));
@@ -89,13 +92,21 @@ public class ListingController {
             return builder.and(predicates.toArray(new Predicate[0]));
         }, pageable);
 
-        return listings.getContent();
+        var listings = listingsPage.getContent();
+
+        ScrapeEvent lastScrape = scrapeHistoryRepo.findAll().stream()
+                .sorted((a, b) -> b.getDate().compareTo(a.getDate()))
+                .findFirst()
+                .orElse(null);
+
+        var response = new GetListingsResponse(listings, lastScrape);
+        return response;
     }
 
     @PutMapping
     public ResponseEntity<Void> updateListings(
             @RequestHeader(value = "x-api-key", required = false) String apiKeyHeader,
-            @RequestBody List<Listing> listingsParam) {
+            @RequestBody List<Listing> listingsRequest) {
 
         if (apiKeyHeader == null || apiKeyHeader.isBlank() || !apiKeyHeader.equals(apiKey)) {
             return ResponseEntity.status(401).build();
@@ -103,48 +114,86 @@ public class ListingController {
 
         var currentListings = listingsRepo.findByDeletedOrUrlIn(
                 false,
-                listingsParam.stream().map(l -> l.getUrl()).toList());
+                listingsRequest.stream().map(l -> l.getUrl()).toList());
 
-        // Delete
-        var toDelete = currentListings.stream()
-                .filter(cl -> !listingsParam.contains(cl))
+        System.out.println("Current listings " + currentListings.size());
+
+        List<Listing> added = getAdded(listingsRequest, currentListings);
+        List<Listing> updated = getUpdated(listingsRequest, currentListings);
+        List<Listing> deleted = getDeleted(listingsRequest, currentListings);
+        List<Listing> undeleted = getUndeleted(listingsRequest, currentListings);
+        List<Listing> untouched = new ArrayList<Listing>(currentListings).stream()
+                .filter(l -> !added.contains(l))
+                .filter(l -> !updated.contains(l))
+                .filter(l -> !deleted.contains(l))
+                .filter(l -> !undeleted.contains(l))
                 .collect(Collectors.toList());
 
-        toDelete.forEach(cl -> {
-            cl.setDeleted(true);
-        });
+        setLastSeen(added);
+        setLastSeen(updated);
+        setLastSeen(undeleted);
+        setLastSeen(untouched);
 
-        // Add
-        var listingsToAdd = new ArrayList<>(listingsParam);
-        listingsToAdd.removeAll(currentListings);
-        currentListings.addAll(listingsToAdd);
+        List<Listing> result = new ArrayList<Listing>();
+        result.addAll(added);
+        result.addAll(updated);
+        result.addAll(deleted);
+        result.addAll(undeleted);
+        result.addAll(untouched);
 
-        // Update
-        var listingsToUpdate = currentListings.stream()
-                .filter(cl -> listingsParam.stream()
-                        .anyMatch(lp -> lp.equals(cl)))
-                .collect(Collectors.toList());
+        long nTotal = result.size() - deleted.size();
 
-        for (Listing listingToUpdate : listingsToUpdate) {
-            listingsParam.stream()
-                    .filter(listingParam -> listingParam.equals(listingToUpdate))
-                    .findFirst()
-                    .ifPresent(listingParam -> {
-                        listingToUpdate.updatePrice(listingParam.getPrice());
-                    });
-        }
+        var scrapeEvent = new ScrapeEvent(added.size(), updated.size(), deleted.size(), undeleted.size(), nTotal);
 
-        currentListings.forEach(l -> l.setLastSeen(OffsetDateTime.now()));
-
-        long nAdded = listingsToAdd.size();
-        long nUpdated = listingsToUpdate.size();
-        long nDeleted = toDelete.size();
-        var scrapeEvent = new ScrapeEvent(nAdded, nUpdated, nDeleted);
-
-        listingsRepo.saveAll(currentListings);
+        listingsRepo.saveAll(result);
         scrapeHistoryRepo.save(scrapeEvent);
 
         return ResponseEntity.ok().build();
+    }
+
+    private void setLastSeen(List<Listing> listings) {
+        listings.forEach(l -> l.setLastSeen(OffsetDateTime.now()));
+    }
+
+    private List<Listing> getUpdated(List<Listing> listingsRequest, List<Listing> currentListings) {
+        var updated = new ArrayList<Listing>();
+
+        for (Listing currentListing : currentListings) {
+            for (Listing listingParam : listingsRequest) {
+                if (StringUtils.equals(currentListing.getUrl(), listingParam.getUrl())) {
+                    if (currentListing.getPrice() != listingParam.getPrice()) {
+                        currentListing.updatePrice(listingParam.getPrice());
+                        updated.add(currentListing);
+                    }
+                }
+
+            }
+        }
+        return updated;
+    }
+
+    private ArrayList<Listing> getAdded(List<Listing> listingsRequest, List<Listing> currentListings) {
+        var added = new ArrayList<>(listingsRequest);
+        added.removeAll(currentListings);
+        return added;
+    }
+
+    private List<Listing> getDeleted(List<Listing> listingsRequest, List<Listing> currentListings) {
+        var deleted = currentListings.stream()
+                .filter(l -> !l.isDeleted())
+                .filter(l -> !listingsRequest.contains(l))
+                .collect(Collectors.toList());
+        deleted.forEach(l -> l.setDeleted(true));
+        return deleted;
+    }
+
+    private List<Listing> getUndeleted(List<Listing> listingsRequest, List<Listing> currentListings) {
+        var undeleted = currentListings.stream()
+                .filter(l -> l.isDeleted())
+                .filter(l -> listingsRequest.contains(l))
+                .collect(Collectors.toList());
+        undeleted.forEach(l -> l.setDeleted(false));
+        return undeleted;
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

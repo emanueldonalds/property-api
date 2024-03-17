@@ -5,7 +5,7 @@ import jakarta.persistence.PreUpdate;
 
 import java.time.OffsetDateTime;
 
-public class DateListener {
+public class ListingsDateListener {
     @PrePersist
     public void firstSeen(Listing l) {
         if (l.getFirstSeen() == null) {
