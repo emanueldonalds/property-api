@@ -12,9 +12,10 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
+import java.util.Objects;
 
 @Entity
-@Table(indexes = @Index(name = "idx_url", columnList = "url"))
+@Table(indexes = { @Index(name = "idx_url", columnList = "url") })
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -39,8 +40,7 @@ public class Listing {
     private Integer price;
     @Embedded
     private Size size;
-    @Column(name = "build_year")
-    private Integer year;
+    private Integer buildYear;
     private Float monthlyCharge;
     private Integer rooms;
     private boolean deleted;
@@ -65,5 +65,17 @@ public class Listing {
         this.priceHistory.add(oldPrice);
         this.price = newPrice;
 
+    }
+
+    public boolean equalsByValue(Listing other) {
+        return Objects.equals(agency, other.getAgency())
+                && Objects.equals(name, other.getName())
+                && Objects.equals(address, other.getAddress())
+                && Objects.equals(url, other.getUrl())
+                && Objects.equals(price, other.getPrice())
+                && size.equalsByValue(other.getSize())
+                && Objects.equals(buildYear, other.getBuildYear())
+                && Objects.equals(monthlyCharge, other.getMonthlyCharge())
+                && Objects.equals(rooms, other.getRooms());
     }
 }
