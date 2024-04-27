@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +29,6 @@ import edonalds.model.ListingsQuery;
 import edonalds.model.ScrapeEvent;
 import edonalds.persistence.ListingsRepository;
 import edonalds.persistence.ScrapeHistoryRepository;
-import edonalds.utils.StringUtils;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.validation.Valid;
@@ -99,8 +99,7 @@ public class ListingController {
                 .findFirst()
                 .orElse(null);
 
-        var response = new GetListingsResponse(listings, lastScrape);
-        return response;
+        return new GetListingsResponse(listings, lastScrape);
     }
 
     @PutMapping
@@ -114,9 +113,7 @@ public class ListingController {
 
         var currentListings = listingsRepo.findByDeletedOrUrlIn(
                 false,
-                listingsRequest.stream().map(l -> l.getUrl()).toList());
-
-        System.out.println("Current listings " + currentListings.size());
+                listingsRequest.stream().map(Listing::getUrl).toList());
 
         List<Listing> added = getAdded(listingsRequest, currentListings);
         List<Listing> updated = getUpdated(listingsRequest, currentListings);
@@ -160,10 +157,18 @@ public class ListingController {
 
         for (Listing currentListing : currentListings) {
             for (Listing listingParam : listingsRequest) {
-                if (StringUtils.equals(currentListing.getUrl(), listingParam.getUrl())) {
-                    if (currentListing.getPrice() != listingParam.getPrice()) {
-                        currentListing.updatePrice(listingParam.getPrice());
+                if (Objects.equals(currentListing.getUrl(), listingParam.getUrl())) {
+                    if (!currentListing.equalsByValue(listingParam)) {
                         updated.add(currentListing);
+                        currentListing.updatePrice(listingParam.getPrice());
+                        currentListing.setAgency(listingParam.getAgency());
+                        currentListing.setName(listingParam.getName());
+                        currentListing.setAddress(listingParam.getAddress());
+                        currentListing.setUrl(listingParam.getUrl());
+                        currentListing.setSize(listingParam.getSize());
+                        currentListing.setBuildYear(listingParam.getBuildYear());
+                        currentListing.setMonthlyCharge(listingParam.getMonthlyCharge());
+                        currentListing.setRooms(listingParam.getRooms());
                     }
                 }
 

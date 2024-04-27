@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Objects;
+
 @Embeddable
 @Data
 @NoArgsConstructor
@@ -15,4 +17,8 @@ public class Size {
     private Float value;
     @Column(name = "size_name")
     private String unit;
+
+    public boolean equalsByValue(Size other) {
+        return Objects.equals(value, other.getValue()) && Objects.equals(unit, other.unit);
+    }
 }
