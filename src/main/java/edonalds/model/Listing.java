@@ -68,12 +68,13 @@ public class Listing {
     }
 
     public boolean equalsByValue(Listing other) {
-        return Objects.equals(agency, other.getAgency())
+        return other != null
+                && Objects.equals(agency, other.getAgency())
                 && Objects.equals(name, other.getName())
                 && Objects.equals(address, other.getAddress())
                 && Objects.equals(url, other.getUrl())
                 && Objects.equals(price, other.getPrice())
-                && size.equalsByValue(other.getSize())
+                && (size == other.size || size != null && size.equalsByValue(other.getSize()))
                 && Objects.equals(buildYear, other.getBuildYear())
                 && Objects.equals(monthlyCharge, other.getMonthlyCharge())
                 && Objects.equals(rooms, other.getRooms());

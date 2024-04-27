@@ -19,6 +19,8 @@ public class Size {
     private String unit;
 
     public boolean equalsByValue(Size other) {
-        return Objects.equals(value, other.getValue()) && Objects.equals(unit, other.unit);
+        return other != null
+                && Objects.equals(value, other.getValue())
+                && Objects.equals(unit, other.getUnit());
     }
 }
