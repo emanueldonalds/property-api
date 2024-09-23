@@ -9,6 +9,8 @@ This API collects currently listed properties for sale on Åland, with links to 
 ### Using in-memory db:
 `./gradlew run --args="--spring.profiles.active=in-mem"`
 
+The api key will be abc123
+
 ### Using MariaDb
 Set the required env variables:
 
