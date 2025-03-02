@@ -1,10 +1,11 @@
 ## Initial installation
-1. Run install.sh with as root
+1. Run install.sh as root
 2. Enter environment variables in override.conf
 3. Run 
 ```
 ./gradlew bootJar
-sudo systmectl daemon-reload` and sudo `sudo systemctl enable property-api
+sudo systmectl daemon-reload 
+sudo systemctl enable property-api
 ```
 
 ## To deploy
