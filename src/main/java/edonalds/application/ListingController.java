@@ -30,6 +30,7 @@ import edonalds.model.ScrapeEvent;
 import edonalds.persistence.ListingsRepository;
 import edonalds.persistence.ScrapeHistoryRepository;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.validation.Valid;
 
@@ -87,6 +88,11 @@ public class ListingController {
 
             if (query.orderByAsc() != null) {
                 criteriaQuery.orderBy(builder.asc(root.get(query.orderByAsc())));
+            }
+
+            if (query.visibility() != null && !query.visibility().isEmpty()) {
+                Join<Listing, String> visibilityJoin = root.join("visibility");
+                predicates.add(visibilityJoin.in(query.visibility()));
             }
 
             return builder.and(predicates.toArray(new Predicate[0]));

@@ -10,8 +10,11 @@ import org.springframework.data.annotation.CreatedDate;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
+import edonalds.persistence.StringListConverter;
+
 import java.time.OffsetDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -43,6 +46,11 @@ public class Listing {
     private Integer buildYear;
     private Float monthlyCharge;
     private Integer rooms;
+
+    @ElementCollection
+    @CollectionTable(name = "listing_visibility", joinColumns = @JoinColumn(name = "listing_id"))
+    private List<String> visibility;
+
     private boolean deleted;
 
     @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL)

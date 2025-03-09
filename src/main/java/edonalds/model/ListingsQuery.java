@@ -16,6 +16,7 @@ public record ListingsQuery(
         Integer maxSize,
         Integer minRooms,
         Integer maxRooms,
+        ArrayList<String> visibility,
         String orderByDesc,
         String orderByAsc) {
 
