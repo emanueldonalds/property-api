@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Data
@@ -22,8 +23,9 @@ public class PriceChange {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonIgnore
     private Long id;
-    private OffsetDateTime lastSeen;
     private Integer price;
+    private OffsetDateTime effectiveFrom;
+    private OffsetDateTime effectiveTo;
     @ManyToOne
     @JoinColumn(name="listing_id")
     @JsonBackReference

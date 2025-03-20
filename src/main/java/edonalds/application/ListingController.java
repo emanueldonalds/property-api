@@ -144,6 +144,17 @@ public class ListingController {
         result.addAll(undeleted);
         result.addAll(untouched);
 
+        System.out.println("About to update prices");
+
+        // Update price history
+        listingsRequest.forEach(listingRequest -> 
+            result.stream()
+                .filter(x -> Objects.equals(x.getUrl(), listingRequest.getUrl()))
+                .findFirst()
+                .ifPresent(x -> x.updatePriceHistory(listingRequest.getPrice()))
+        );
+
+
         long nTotal = result.size() - deleted.size();
 
         var scrapeEvent = new ScrapeEvent(added.size(), updated.size(), deleted.size(), undeleted.size(), nTotal);
@@ -166,7 +177,6 @@ public class ListingController {
                 if (Objects.equals(currentListing.getUrl(), listingParam.getUrl())) {
                     if (!currentListing.equalsByValue(listingParam)) {
                         updated.add(currentListing);
-                        currentListing.updatePrice(listingParam.getPrice());
                         currentListing.setAgency(listingParam.getAgency());
                         currentListing.setName(listingParam.getName());
                         currentListing.setAddress(listingParam.getAddress());
