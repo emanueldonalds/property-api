@@ -24,11 +24,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.PostLoad;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
-import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -66,7 +64,6 @@ public class Listing {
     @EqualsAndHashCode.Include
     private String url;
 
-    @Transient
     private Integer price;
 
     @Embedded
@@ -88,15 +85,9 @@ public class Listing {
     @JsonManagedReference
     private Collection<PriceChange> priceHistory = new ArrayList<>();
 
-    @PostLoad
-    private void setPriceFromHistory() {
-        this.priceHistory.stream()
-            .collect(Collectors.maxBy(Comparator.comparing(PriceChange::getEffectiveFrom)))
-            .ifPresent(latestPrice -> this.price = latestPrice.getPrice());
-    }
-
     public void updatePriceHistory(Integer value) {
-        System.out.println("%s setting price to %s. Current value is %s".formatted(this.getAddress(), value,  this.price));
+        System.out
+                .println("%s setting price to %s. Current value is %s".formatted(this.getAddress(), value, this.price));
         if (value == null && this.price == null) {
             System.out.println("1");
             return;
@@ -125,6 +116,7 @@ public class Listing {
         newPrice.setListing(this);
 
         this.priceHistory.add(newPrice);
+        this.price = value;
     }
 
     public boolean equalsByValue(Listing other) {
