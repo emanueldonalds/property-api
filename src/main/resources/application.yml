@@ -6,7 +6,7 @@ logging.file.name: /var/log/app/property-api.log
 
 spring.datasource.driver-class-name: org.mariadb.jdbc.Driver
 spring.datasource.url: jdbc:mariadb://${PROPERTY_API_DB_HOST}:${PROPERTY_API_DB_PORT}/property_api
-spring.datasource.username: root
+spring.datasource.username: property-api
 spring.datasource.password: ${PROPERTY_API_DB_PASSWORD}
 
 spring.jackson.serialization.write-dates-as-timestamps: false
