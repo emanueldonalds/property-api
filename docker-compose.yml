@@ -1,8 +1,28 @@
-version: '3'
-volumes:
-  data:
 services:
-  maria-db:
+  app:
+    build:
+      dockerfile: ./Dockerfile
+      context: .
+    env_file: /etc/envs/property-scraper.env
+    ports:
+      - "10000:10000"
+    restart: unless-stopped
+    profiles: [prod]
+
+  app-local:
+    build:
+      dockerfile: ./Dockerfile
+      context: .
+    environment:
+      PROPERTY_API_DB_HOST: db-local
+      PROPERTY_API_DB_PORT: 3306
+      PROPERTY_API_DB_PASSWORD: password
+      PROPERTY_API_APIKEY: abc123
+    ports:
+      - "127.0.0.1:10000:10000"
+    profiles: [local]
+
+  db-local:
     image: mariadb
     environment:
       MYSQL_ROOT_PASSWORD: password
@@ -12,4 +32,8 @@ services:
     volumes:
       - data:/var/lib/mysql
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
+    profiles: [local]
+
+volumes:
+  data:

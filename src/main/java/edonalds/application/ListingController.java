@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -49,6 +50,7 @@ public class ListingController {
     }
 
     @GetMapping
+    @Transactional
     public GetListingsResponse getListings(@Valid ListingsQuery query) {
         var pageable = PageRequest.of(0, query.limit());
 

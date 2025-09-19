@@ -20,3 +20,7 @@ Set the required env variables:
 - `PROPERTY_API_APIKEY`
 
 `./gradlew run`
+
+### Using docker
+
+docker compose --profile local up app-local -d
