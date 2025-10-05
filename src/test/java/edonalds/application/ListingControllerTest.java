@@ -4,6 +4,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -234,6 +236,9 @@ public class ListingControllerTest {
         assertEquals(250000, priceHistory.get(0).getPrice());
         assertEquals(230000, priceHistory.get(1).getPrice());
         assertEquals(190000, priceHistory.get(2).getPrice());
+        assertNotNull(priceHistory.get(0).getEffectiveTo());
+        assertNotNull(priceHistory.get(1).getEffectiveTo());
+        assertNull(priceHistory.get(2).getEffectiveTo());
     }
 
     private Listing getListing(String name) {

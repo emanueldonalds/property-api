@@ -33,7 +33,10 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(indexes = { @Index(name = "idx_url", columnList = "url") })
+@Table(indexes = {
+        @Index(name = "idx_url", columnList = "url"),
+        @Index(name = "idx_address", columnList = "address")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
