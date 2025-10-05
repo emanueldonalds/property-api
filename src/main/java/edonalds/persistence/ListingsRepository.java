@@ -13,5 +13,4 @@ import java.util.List;
 public interface ListingsRepository extends CrudRepository<Listing, Long>, JpaSpecificationExecutor<Listing> {
     List<Listing> findAll(Specification<Listing> spec);
     List<Listing> findByDeleted(boolean deleted);
-    List<Listing> findByDeletedOrUrlIn(boolean deleted, Collection<String> urls);
 }

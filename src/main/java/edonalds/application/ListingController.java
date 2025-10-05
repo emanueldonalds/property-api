@@ -119,47 +119,38 @@ public class ListingController {
             return ResponseEntity.status(401).build();
         }
 
-        var currentListings = listingsRepo.findByDeletedOrUrlIn(
-                false,
-                listingsRequest.stream().map(Listing::getUrl).toList());
+        var currentListings = listingsRepo.findByDeleted(false);
 
         List<Listing> added = getAdded(listingsRequest, currentListings);
         List<Listing> updated = getUpdated(listingsRequest, currentListings);
         List<Listing> deleted = getDeleted(listingsRequest, currentListings);
-        List<Listing> undeleted = getUndeleted(listingsRequest, currentListings);
         List<Listing> untouched = new ArrayList<Listing>(currentListings).stream()
                 .filter(l -> !added.contains(l))
                 .filter(l -> !updated.contains(l))
                 .filter(l -> !deleted.contains(l))
-                .filter(l -> !undeleted.contains(l))
                 .collect(Collectors.toList());
 
         setLastSeen(added);
         setLastSeen(updated);
-        setLastSeen(undeleted);
         setLastSeen(untouched);
 
         List<Listing> result = new ArrayList<Listing>();
         result.addAll(added);
         result.addAll(updated);
         result.addAll(deleted);
-        result.addAll(undeleted);
         result.addAll(untouched);
 
         System.out.println("About to update prices");
 
         // Update price history
-        listingsRequest.forEach(listingRequest -> 
-            result.stream()
+        listingsRequest.forEach(listingRequest -> result.stream()
                 .filter(x -> Objects.equals(x.getUrl(), listingRequest.getUrl()))
                 .findFirst()
-                .ifPresent(x -> x.updatePriceHistory(listingRequest.getPrice()))
-        );
-
+                .ifPresent(x -> x.updatePriceHistory(listingRequest.getPrice())));
 
         long nTotal = result.size() - deleted.size();
 
-        var scrapeEvent = new ScrapeEvent(added.size(), updated.size(), deleted.size(), undeleted.size(), nTotal);
+        var scrapeEvent = new ScrapeEvent(added.size(), updated.size(), deleted.size(), nTotal);
 
         listingsRepo.saveAll(result);
         scrapeHistoryRepo.save(scrapeEvent);
@@ -203,20 +194,10 @@ public class ListingController {
 
     private List<Listing> getDeleted(List<Listing> listingsRequest, List<Listing> currentListings) {
         var deleted = currentListings.stream()
-                .filter(l -> !l.isDeleted())
                 .filter(l -> !listingsRequest.contains(l))
                 .collect(Collectors.toList());
         deleted.forEach(l -> l.setDeleted(true));
         return deleted;
-    }
-
-    private List<Listing> getUndeleted(List<Listing> listingsRequest, List<Listing> currentListings) {
-        var undeleted = currentListings.stream()
-                .filter(l -> l.isDeleted())
-                .filter(l -> listingsRequest.contains(l))
-                .collect(Collectors.toList());
-        undeleted.forEach(l -> l.setDeleted(false));
-        return undeleted;
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -229,5 +210,4 @@ public class ListingController {
 
         return new ResponseEntity<>(errorResponse, new HttpHeaders(), HttpStatus.BAD_REQUEST);
     }
-
 }
