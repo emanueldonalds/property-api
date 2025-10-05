@@ -21,6 +21,8 @@ services:
     ports:
       - "127.0.0.1:10000:10000"
     profiles: [local]
+    depends_on: 
+      - db-local
 
   db-local:
     image: mariadb
@@ -30,10 +32,7 @@ services:
       MYSQL_USER: property-api
       MYSQL_PASSWORD: password
     volumes:
-      - data:/var/lib/mysql
+      - ./test-init-db.sql:/docker-entrypoint-initdb.d/seed.sql:ro
     ports:
       - "127.0.0.1:3306:3306"
     profiles: [local]
-
-volumes:
-  data:

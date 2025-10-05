@@ -23,4 +23,4 @@ Set the required env variables:
 
 ### Using docker
 
-docker compose --profile local up app-local -d
+docker compose --profile local up -d

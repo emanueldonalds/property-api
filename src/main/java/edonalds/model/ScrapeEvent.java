@@ -31,20 +31,17 @@ public class ScrapeEvent {
     private long added;
     private long updated;
     private long deleted;
-    private long undeleted;
     private long totalActive;
 
     public ScrapeEvent(
             long added,
             long updated,
             long deleted,
-            long undeleted,
             long totalActive)
     {
         this.added = added;
         this.updated = updated;
         this.deleted = deleted;
-        this.undeleted = undeleted;
         this.totalActive = totalActive;
     }
 }
