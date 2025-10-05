@@ -34,9 +34,11 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/listings")
+@Slf4j
 public class ListingController {
     private final String apiKey;
     private final ScrapeHistoryRepository scrapeHistoryRepo;
@@ -111,6 +113,7 @@ public class ListingController {
     }
 
     @PutMapping
+    @Transactional
     public ResponseEntity<Void> updateListings(
             @RequestHeader(value = "x-api-key", required = false) String apiKeyHeader,
             @RequestBody List<Listing> listingsRequest) {
@@ -120,6 +123,7 @@ public class ListingController {
         }
 
         var currentListings = listingsRepo.findByDeleted(false);
+        System.out.println("CURRENT " + currentListings.size());
 
         List<Listing> added = getAdded(listingsRequest, currentListings);
         List<Listing> updated = getUpdated(listingsRequest, currentListings);
@@ -129,6 +133,11 @@ public class ListingController {
                 .filter(l -> !updated.contains(l))
                 .filter(l -> !deleted.contains(l))
                 .collect(Collectors.toList());
+
+        log.debug("Added {}", added.size());
+        log.debug("Updated {}", updated.size());
+        log.debug("Deleted {}", deleted.size());
+        log.debug("Untouched {}", untouched.size());
 
         setLastSeen(added);
         setLastSeen(updated);
