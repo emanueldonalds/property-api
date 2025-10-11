@@ -14,6 +14,7 @@ import edonalds.model.TemporalRange;
 import edonalds.persistence.ListingsRepository;
 import edonalds.persistence.PriceChangeRepository;
 import edonalds.persistence.StatisticsRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,6 +27,11 @@ public class StatisticsJob {
     private final PriceChangeRepository priceChangeRepository;
     private final StatisticsRepository statisticsRepository;
 
+    @PostConstruct
+    public void startup() {
+        run();
+    }
+
     @Scheduled(cron = "0 0 0 * * *")
     public void run() {
         log.info("Running statistics");
@@ -37,13 +43,11 @@ public class StatisticsJob {
         log.info("Count of price changes {}", priceChanges.size());
 
         var period = priceChangeRepository.getPeriod();
-        log.info("Period is from {} to {} equals? {}", period.getFrom(), period.getTo(),
-                period.getFrom().equals(period.getTo()));
+        log.info("Period is from {} to {}", period.getFrom(), period.getTo());
 
         var stats = new ArrayList<DailyStatistic>();
 
         for (LocalDate date = period.getFrom(); !date.equals(period.getTo().plusDays(1)); date = date.plusDays(1)) {
-            log.info("Running date {}", date);
             var avgPrice = (long) Math.round(priceChanges.stream()
                     .filter(inRange(date))
                     .filter(pc -> pc.getPrice() != null)
@@ -80,15 +84,10 @@ public class StatisticsJob {
         log.info("Statistics finished");
     }
 
-    // Stupid function that exist for no reason and should just be a normal lambda.
-    // Just practicing some of that needlessly functional stupid fucking abstract
-    // mega-indirection quantum entanglement bullshit that my colleagues seem to
-    // consider good code at work.
     private Predicate<TemporalRange> inRange(LocalDate date) {
         return range -> contains(range, date);
     }
 
-    // Needlessly generic contains method
     private boolean contains(TemporalRange range, LocalDate date) {
         var from = range.from() == null ? LocalDate.MIN.toEpochDay() : range.from().toLocalDate().toEpochDay();
         var to = range.to() == null ? LocalDate.MAX.toEpochDay() : range.to().toLocalDate().toEpochDay();
