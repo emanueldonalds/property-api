@@ -3,7 +3,7 @@ services:
     build:
       dockerfile: ./Dockerfile
       context: .
-    env_file: /etc/envs/property-scraper.env
+    env_file: /etc/envs/property-api.env
     ports:
       - "10000:10000"
     restart: unless-stopped
