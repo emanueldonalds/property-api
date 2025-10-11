@@ -149,16 +149,13 @@ public class ListingController {
         result.addAll(deleted);
         result.addAll(untouched);
 
-        System.out.println("About to update prices");
-
-        // Update price history
+        // Update prices
         listingsRequest.forEach(listingRequest -> result.stream()
                 .filter(x -> Objects.equals(x.getUrl(), listingRequest.getUrl()))
                 .findFirst()
                 .ifPresent(x -> x.updatePriceHistory(listingRequest.getPrice())));
 
         long nTotal = result.size() - deleted.size();
-
         var scrapeEvent = new ScrapeEvent(added.size(), updated.size(), deleted.size(), nTotal);
 
         listingsRepo.saveAll(result);

@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static edonalds.application.TestHelper.newListing;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -57,13 +58,13 @@ public class ListingControllerTest {
     @Test
     void AddNewListingsFromBlankSlate() throws Exception {
         var listings = Arrays.asList(
-                getListing("l1"),
-                getListing("l2"),
-                getListing("l3"));
+                newListing("l1"),
+                newListing("l2"),
+                newListing("l3"));
 
         putListings(listings).andExpect(status().isOk());
 
-        getListings()
+        newListings()
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].name", is(listings.get(0).getName())))
                 .andExpect(jsonPath("$.data[1].name", is(listings.get(1).getName())))
@@ -72,29 +73,29 @@ public class ListingControllerTest {
 
     @Test
     void deleteListing() throws Exception {
-        var l1 = getListing("l1");
-        var l2 = getListing("l2");
-        var l3 = getListing("l3");
+        var l1 = newListing("l1");
+        var l2 = newListing("l2");
+        var l3 = newListing("l3");
 
         putListings(Arrays.asList(l1, l2, l3));
-        getListings().andExpect(jsonPath("$.data", hasSize(3)));
+        newListings().andExpect(jsonPath("$.data", hasSize(3)));
 
         putListings(Arrays.asList(l1, l3));
-        getListings()
+        newListings()
                 .andExpect(jsonPath("$.data", hasSize(2)))
                 .andExpect(jsonPath("$.data[0].name", is(l1.getName())));
     }
 
     @Test
     void deleteAndAddBackListing() throws Exception {
-        var l1 = getListing("l1");
-        var l2 = getListing("l2");
-        var l3 = getListing("l3");
+        var l1 = newListing("l1");
+        var l2 = newListing("l2");
+        var l3 = newListing("l3");
 
         putListings(Arrays.asList(l1, l2, l3));
         putListings(Arrays.asList(l1, l3));
         putListings(Arrays.asList(l1, l2, l3));
-        getListings().andExpect(jsonPath("$.data", hasSize(3)));
+        newListings().andExpect(jsonPath("$.data", hasSize(3)));
 
         var all = listingsRepository.findAll();
         assertEquals(4, all.size());
@@ -113,13 +114,13 @@ public class ListingControllerTest {
 
     @Test
     void updateListing() throws Exception {
-        var l1 = getListing("l1");
-        var l2 = getListing("l2");
-        var l3 = getListing("l3");
+        var l1 = newListing("l1");
+        var l2 = newListing("l2");
+        var l3 = newListing("l3");
 
         putListings(Arrays.asList(l1, l2, l3));
 
-        getListings()
+        newListings()
                 .andExpect(jsonPath("$.data[1].name", is(l2.getName())))
                 .andExpect(jsonPath("$.data[1].agency", is(l2.getAgency())))
                 .andExpect(jsonPath("$.data[1].address", is(l2.getAddress())))
@@ -146,7 +147,7 @@ public class ListingControllerTest {
 
         putListings(Arrays.asList(l1, l2, l3));
 
-        getListings()
+        newListings()
                 .andExpect(jsonPath("$.data", hasSize(3)))
                 .andExpect(jsonPath("$.data[1].name", is(l2.getName())))
                 .andExpect(jsonPath("$.data[1].agency", is(l2.getAgency())))
@@ -163,21 +164,21 @@ public class ListingControllerTest {
 
     @Test
     void updateAndDeleteAndAddNewListings() throws Exception {
-        var l1 = getListing("l1");
-        var l2 = getListing("l2");
-        var l3 = getListing("l3");
+        var l1 = newListing("l1");
+        var l2 = newListing("l2");
+        var l3 = newListing("l3");
 
         putListings(Arrays.asList(l1, l2, l3));
 
         l2.setName("Hej");
 
-        var updatedL3 = getListing("l3");
+        var updatedL3 = newListing("l3");
         updatedL3.setUrl(l3.getUrl());
 
-        var l4 = getListing("l4");
+        var l4 = newListing("l4");
 
         putListings(Arrays.asList(l2, updatedL3, l4));
-        getListings()
+        newListings()
                 .andExpect(jsonPath("$.data", hasSize(3)))
                 .andExpect(jsonPath("$.data[0].name", is(l2.getName())))
                 .andExpect(jsonPath("$.data[0].agency", is(l2.getAgency())))
@@ -215,9 +216,9 @@ public class ListingControllerTest {
 
     @Test
     void updatePrice() throws Exception {
-        var l1 = getListing("l1");
-        var l2 = getListing("l2");
-        var l3 = getListing("l3");
+        var l1 = newListing("l1");
+        var l2 = newListing("l2");
+        var l3 = newListing("l3");
 
         l1.setPrice(250000);
         putListings(Arrays.asList(l1, l2, l3));
@@ -228,10 +229,17 @@ public class ListingControllerTest {
         l1.setPrice(190000);
         putListings(Arrays.asList(l1, l2, l3));
 
-        var entity = listingsRepository.findAll().stream().filter(x -> Objects.equals(x.getName(), l1.getName())).findFirst().orElse(null);
+        var entity = listingsRepository.findAll().stream()
+                .filter(x -> Objects.equals(x.getName(), l1.getName()))
+                .findFirst()
+                .orElse(null);
+
         assertEquals(190000, entity.getPrice());
 
-        var priceHistory = entity.getPriceHistory().stream().sorted(Comparator.comparing(PriceChange::getEffectiveFrom)).toList();
+        var priceHistory = entity.getPriceHistory().stream()
+                .sorted(Comparator.comparing(PriceChange::getEffectiveFrom))
+                .toList();
+
         assertEquals(3, priceHistory.size());
         assertEquals(250000, priceHistory.get(0).getPrice());
         assertEquals(230000, priceHistory.get(1).getPrice());
@@ -241,22 +249,7 @@ public class ListingControllerTest {
         assertNull(priceHistory.get(2).getEffectiveTo());
     }
 
-    private Listing getListing(String name) {
-        var listing = new Listing();
-        listing.setAgency(faker.lorem().word());
-        listing.setName(name);
-        listing.setAddress(faker.address().streetAddress());
-        listing.setUrl("https://example.com/" + name);
-        listing.setPrice(100000);
-        listing.setSize(new Size(40f, "m2"));
-        listing.setBuildYear(1998);
-        listing.setMonthlyCharge(140f);
-        listing.setRooms(3);
-        listing.setVisibility(Arrays.asList("ALAND"));
-        return listing;
-    }
-
-    private ResultActions getListings() throws Exception {
+    private ResultActions newListings() throws Exception {
         return mvc.perform(get("/listings")
                 .queryParam("orderByAsc", "name")
                 .header("x-api-key", "123")

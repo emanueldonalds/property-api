@@ -28,6 +28,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -38,11 +39,12 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_address", columnList = "address")
 })
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(ListingsDateListener.class)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Listing {
+public class Listing implements TemporalRange {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -86,13 +88,13 @@ public class Listing {
 
     @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL)
     @JsonManagedReference
+    @Builder.Default
     private Collection<PriceChange> priceHistory = new ArrayList<>();
 
     public void updatePriceHistory(Integer value) {
         System.out
                 .println("%s setting price to %s. Current value is %s".formatted(this.getAddress(), value, this.price));
         if (value == null && this.price == null) {
-            System.out.println("1");
             return;
         }
 
@@ -102,16 +104,17 @@ public class Listing {
         if (value != null && lastPrice.isPresent()) {
             System.out.println("previous price is %s".formatted(lastPrice.get().getPrice()));
             if (value.equals(lastPrice.get().getPrice())) {
-                System.out.println("2");
                 return;
             }
         }
 
         System.out.println("Updating price to %s".formatted(value));
 
-        this.priceHistory.stream()
-                .collect(Collectors.maxBy(Comparator.comparing(PriceChange::getEffectiveFrom)))
-                .ifPresent(p -> p.setEffectiveTo(this.lastSeen));
+
+        //this.priceHistory.stream()
+        //        .collect(Collectors.maxBy(Comparator.comparing(PriceChange::getEffectiveFrom)))
+        //        .ifPresent(p -> p.setEffectiveTo(this.lastSeen));
+        lastPrice.ifPresent(p -> p.setEffectiveTo(this.lastSeen));
 
         var newPrice = new PriceChange();
         newPrice.setEffectiveFrom(this.lastSeen.plusNanos(1));
@@ -133,5 +136,15 @@ public class Listing {
                 && Objects.equals(buildYear, other.getBuildYear())
                 && Objects.equals(monthlyCharge, other.getMonthlyCharge())
                 && Objects.equals(rooms, other.getRooms());
+    }
+
+    @Override
+    public OffsetDateTime from() {
+        return firstSeen;
+    }
+
+    @Override
+    public OffsetDateTime to() {
+        return lastSeen;
     }
 }
