@@ -2,10 +2,12 @@ package edonalds.application;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.function.Predicate;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import edonalds.model.DailyStatistic;
 import edonalds.model.PriceChange;
@@ -15,21 +17,32 @@ import edonalds.persistence.ListingsRepository;
 import edonalds.persistence.PriceChangeRepository;
 import edonalds.persistence.StatisticsRepository;
 import jakarta.annotation.PostConstruct;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@Service
 @Slf4j
-@AllArgsConstructor
+@Component
 public class StatisticsJob {
 
+    private final boolean startup;
     private final ListingsRepository listingsRepository;
     private final PriceChangeRepository priceChangeRepository;
     private final StatisticsRepository statisticsRepository;
 
+    public StatisticsJob(@Value("${startup.statistics.enabled:true}") boolean startup,
+            ListingsRepository listingsRepository,
+            PriceChangeRepository priceChangeRepository,
+            StatisticsRepository statisticsRepository) {
+        this.startup = startup;
+        this.listingsRepository = listingsRepository;
+        this.priceChangeRepository = priceChangeRepository;
+        this.statisticsRepository = statisticsRepository;
+    }
+
     @PostConstruct
     public void startup() {
-        run();
+        if (this.startup) {
+            run();
+        }
     }
 
     @Scheduled(cron = "0 0 0 * * *")
@@ -68,6 +81,24 @@ public class StatisticsJob {
                     .average()
                     .orElse(0.0));
 
+            var medPrice = median(priceChanges.stream()
+                    .filter(inRange(date))
+                    .filter(pc -> pc.getPrice() != null)
+                    .mapToInt(pc -> pc.getPrice())
+                    .toArray());
+
+            var medPriceM2 = median(priceChanges.stream()
+                    .filter(inRange(date))
+                    .filter(pc -> pc.getPrice() != null)
+                    .filter(pc -> pc.getListing().getSize() != null)
+                    .filter(pc -> "m2".equals(pc.getListing().getSize().getUnit()))
+                    .mapToInt(pc -> {
+                        Size size = pc.getListing().getSize();
+                        var res = pc.getPrice() / size.getValue();
+                        return (int) Math.round(res);
+                    })
+                    .toArray());
+
             var nListings = listings.stream()
                     .filter(inRange(date))
                     .count();
@@ -76,6 +107,8 @@ public class StatisticsJob {
                     .date(date)
                     .avgPrice(avgPrice)
                     .avgPriceM2(avgPriceM2)
+                    .medPrice((long) medPrice)
+                    .medPriceM2((long) medPriceM2)
                     .nListings(nListings)
                     .build());
         }
@@ -94,4 +127,17 @@ public class StatisticsJob {
         var current = date.toEpochDay();
         return from <= current && to >= current;
     }
+
+    public static int median(int[] numbers) {
+        int[] sorted = Arrays.copyOf(numbers, numbers.length);
+        Arrays.sort(sorted);
+
+        int n = sorted.length;
+        if (n % 2 == 1) {
+            return sorted[n / 2];
+        } else {
+            return (sorted[(n / 2) - 1] + sorted[n / 2]) / 2;
+        }
+    }
+
 }

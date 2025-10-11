@@ -99,9 +99,7 @@ public class StatisticsTest {
         priceChangeRepository.saveAll(priceChanges);
 
         statisticsJob.run();
-
         var stats = statisticsRepository.findAll();
-
         assertEquals(6, stats.size());
 
         var s1 = stats.get(0);
@@ -124,5 +122,19 @@ public class StatisticsTest {
         assertEquals(6000, s4.getAvgPriceM2());
         assertEquals(10000, s5.getAvgPriceM2());
         assertEquals(20000, s6.getAvgPriceM2());
+
+        assertEquals(100000, s1.getMedPrice());
+        assertEquals(150000, s2.getMedPrice());
+        assertEquals(200000, s3.getMedPrice());
+        assertEquals(400000, s4.getMedPrice());
+        assertEquals(600000, s5.getMedPrice());
+        assertEquals(1050000, s6.getMedPrice());
+
+        assertEquals(1000, s1.getMedPriceM2());
+        assertEquals(1500, s2.getMedPriceM2());
+        assertEquals(2000, s3.getMedPriceM2());
+        assertEquals(4000, s4.getMedPriceM2());
+        assertEquals(6000, s5.getMedPriceM2());
+        assertEquals(10500, s6.getMedPriceM2());
     }
 }

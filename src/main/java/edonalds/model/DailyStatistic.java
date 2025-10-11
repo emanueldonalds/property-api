@@ -25,5 +25,7 @@ public class DailyStatistic {
 
     private long avgPrice;
     private long avgPriceM2;
+    private long medPrice;
+    private long medPriceM2;
     private long nListings;
 }
