@@ -47,6 +47,6 @@ public class ScrapeEvent {
 
     @Override
     public String toString() {
-        return "Id {}\nAdded {}\nUpdated {}\nDeleted {}\nTotal active {}\n".formatted(added, updated, deleted, totalActive);
+        return "Id %s\nAdded %s\nUpdated %s\nDeleted %s\nTotal active %s\n".formatted(id, added, updated, deleted, totalActive);
     }
 }

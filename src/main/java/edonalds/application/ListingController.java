@@ -139,6 +139,13 @@ public class ListingController {
         log.debug("Deleted {}", deleted.size());
         log.debug("Untouched {}", untouched.size());
 
+        log.debug("Added list:");
+        added.forEach(l -> log.debug(l.getUrl()));
+        log.debug("Updated list:");
+        updated.forEach(l -> log.debug(l.getUrl()));
+        log.debug("Deleted list:");
+        deleted.forEach(l -> log.debug(l.getUrl()));
+
         setLastSeen(added);
         setLastSeen(updated);
         setLastSeen(untouched);
