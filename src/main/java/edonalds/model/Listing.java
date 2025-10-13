@@ -32,7 +32,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Entity
 @Table(indexes = {
         @Index(name = "idx_url", columnList = "url"),
@@ -92,9 +94,9 @@ public class Listing implements TemporalRange {
     private Collection<PriceChange> priceHistory = new ArrayList<>();
 
     public void updatePriceHistory(Integer value) {
-        System.out
-                .println("%s setting price to %s. Current value is %s".formatted(this.getAddress(), value, this.price));
+        log.debug("Checking if price history needs to be updated on {}. Current price: {}", this.url, this.price);
         if (value == null && this.price == null) {
+            log.debug("Both inputs were null, returning.");
             return;
         }
 
@@ -102,18 +104,13 @@ public class Listing implements TemporalRange {
                 .collect(Collectors.maxBy(Comparator.comparing(PriceChange::getEffectiveFrom)));
 
         if (value != null && lastPrice.isPresent()) {
-            System.out.println("previous price is %s".formatted(lastPrice.get().getPrice()));
+            log.debug("Previous price is {}", lastPrice.get().getPrice());
             if (value.equals(lastPrice.get().getPrice())) {
                 return;
             }
         }
 
-        System.out.println("Updating price to %s".formatted(value));
 
-
-        //this.priceHistory.stream()
-        //        .collect(Collectors.maxBy(Comparator.comparing(PriceChange::getEffectiveFrom)))
-        //        .ifPresent(p -> p.setEffectiveTo(this.lastSeen));
         lastPrice.ifPresent(p -> p.setEffectiveTo(this.lastSeen));
 
         var newPrice = new PriceChange();
@@ -123,10 +120,12 @@ public class Listing implements TemporalRange {
 
         this.priceHistory.add(newPrice);
         this.price = value;
+        log.debug("Update price to {}. There are now {} price history entries for this listing", value, this.priceHistory.size());
     }
 
     public boolean equalsByValue(Listing other) {
-        return other != null
+        log.debug("Comparing {} to {}", this.getUrl(), other.getUrl());
+        var equals = other != null
                 && Objects.equals(agency, other.getAgency())
                 && Objects.equals(name, other.getName())
                 && Objects.equals(address, other.getAddress())
@@ -136,6 +135,8 @@ public class Listing implements TemporalRange {
                 && Objects.equals(buildYear, other.getBuildYear())
                 && Objects.equals(monthlyCharge, other.getMonthlyCharge())
                 && Objects.equals(rooms, other.getRooms());
+        log.debug("Equals? " + equals);
+        return equals;
     }
 
     @Override

@@ -72,6 +72,20 @@ public class ListingControllerTest {
     }
 
     @Test
+    void AddSameListingsMultipleTimes() throws Exception {
+        var l1 = newListing("l1");
+        var l2 = newListing("l2");
+        var l3 = newListing("l3");
+
+        putListings(Arrays.asList(l1, l2, l3));
+        putListings(Arrays.asList(l1, l2, l3));
+        putListings(Arrays.asList(l1, l2, l3));
+
+        var entities = listingsRepository.findAll();
+        assertEquals(3, entities.size());
+    }
+
+    @Test
     void deleteListing() throws Exception {
         var l1 = newListing("l1");
         var l2 = newListing("l2");

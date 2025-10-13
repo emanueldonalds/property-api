@@ -123,7 +123,7 @@ public class ListingController {
         }
 
         var currentListings = listingsRepo.findByDeleted(false);
-        System.out.println("CURRENT " + currentListings.size());
+        log.debug("Number of current listings: {}", currentListings.size());
 
         List<Listing> added = getAdded(listingsRequest, currentListings);
         List<Listing> updated = getUpdated(listingsRequest, currentListings);
@@ -157,6 +157,8 @@ public class ListingController {
 
         long nTotal = result.size() - deleted.size();
         var scrapeEvent = new ScrapeEvent(added.size(), updated.size(), deleted.size(), nTotal);
+
+        log.debug("Scrape event: {}", scrapeEvent.toString());
 
         listingsRepo.saveAll(result);
         scrapeHistoryRepo.save(scrapeEvent);

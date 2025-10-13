@@ -44,4 +44,9 @@ public class ScrapeEvent {
         this.deleted = deleted;
         this.totalActive = totalActive;
     }
+
+    @Override
+    public String toString() {
+        return "Id {}\nAdded {}\nUpdated {}\nDeleted {}\nTotal active {}\n".formatted(added, updated, deleted, totalActive);
+    }
 }
