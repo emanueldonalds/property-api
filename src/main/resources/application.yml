@@ -22,6 +22,7 @@ spring.jpa.open-in-view: true
 
 client.nominatim.url: ${PROPERTY_API_NOMINATIM_URL:localhost}
 
+startup.statistics.enabled: false
 ---
 
 logging.level.root: WARN

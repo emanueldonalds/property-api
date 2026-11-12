@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import edonalds.client.NominatimClient;
 import edonalds.client.NominatimRequest;
@@ -22,6 +23,7 @@ public class GeoLocationService {
     private final NominatimClient nominatimClient;
 
     @Async("customExecutor")
+    @Transactional
     public void addGeoLocations(List<Listing> listings) {
 
         var targetListings = listingsRepository.findByIdInAndGeoLocationIsNull(

@@ -22,7 +22,7 @@ public class GeoLocation {
 
     @OneToOne
     @MapsId
-    @JoinColumn(name = "linsting_id")
+    @JoinColumn(name = "listing_id")
     private Listing listing;
 
     private String queryResult;
