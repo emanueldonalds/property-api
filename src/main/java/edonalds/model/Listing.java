@@ -95,7 +95,7 @@ public class Listing implements TemporalRange {
     @Builder.Default
     private Collection<PriceChange> priceHistory = new ArrayList<>();
 
-    @OneToOne(mappedBy = "listing", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "listing", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
     private GeoLocation geoLocation;
 
     public void updatePriceHistory(Integer value) {

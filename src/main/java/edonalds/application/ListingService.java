@@ -30,6 +30,7 @@ public class ListingService {
     private final ScrapeHistoryRepository scrapeHistoryRepo;
     private final ListingsRepository listingsRepo;
 
+    @Transactional
     public GetListingsResponse getListings(ListingsQuery query) {
         var pageable = PageRequest.of(0, query.limit());
 

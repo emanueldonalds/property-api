@@ -23,7 +23,6 @@ public class GeoLocationService {
     private final NominatimClient nominatimClient;
 
     @Async("customExecutor")
-    @Transactional
     public void addGeoLocations(List<Listing> listings) {
         log.info("Geolocation start...");
 
@@ -38,7 +37,8 @@ public class GeoLocationService {
         int failed = 0;
 
         for (Listing listing : targetListings) {
-            var geoLocation = addGeoLocation(listing);
+            var geoLocation = findGeoLocation(listing);
+            listing.setGeoLocation(geoLocation);
 
             if ("SUCCESS".equals(geoLocation.getQueryResult())) {
                 succeeded++;
@@ -47,13 +47,14 @@ public class GeoLocationService {
             }
         }
 
-        listingsRepository.saveAll(targetListings);
+        saveListings(targetListings);
 
         log.info("{} nomanitim requests succeeded, {} failed.", succeeded, failed);
         log.info("Fetching geolocations done.");
     }
 
-    public GeoLocation addGeoLocation(Listing listing) {
+    @Transactional
+    private GeoLocation findGeoLocation(Listing listing) {
         var geoLocationBuilder = GeoLocation.builder();
         geoLocationBuilder.listing(listing);
         geoLocationBuilder.geocodingService("Nominatim");
@@ -77,7 +78,11 @@ public class GeoLocationService {
 
         var geoLocation = geoLocationBuilder.build();
 
-        listing.setGeoLocation(geoLocation);
         return geoLocation;
+    }
+
+    @Transactional
+    private void saveListings(List<Listing> listings) {
+        listingsRepository.saveAll(listings);
     }
 }

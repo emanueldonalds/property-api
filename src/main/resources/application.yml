@@ -23,6 +23,12 @@ spring.jpa.open-in-view: true
 client.nominatim.url: ${PROPERTY_API_NOMINATIM_URL:localhost}
 
 startup.statistics.enabled: false
+
+#logging.level.org.springframework.transaction: TRACE
+#logging.level.org.springframework.orm.jpa: DEBUG
+#logging.level.org.springframework.data.jpa.repository.support.SimpleJpaRepository: TRACE
+#logging.level.org.hibernate.event.internal: TRACE
+
 ---
 
 logging.level.root: WARN

@@ -45,7 +45,6 @@ public class ListingController {
     }
 
     @GetMapping
-    @Transactional
     public GetListingsResponse getListings(@Valid ListingsQuery query) {
         return listingService.getListings(query);
     }
