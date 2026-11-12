@@ -23,16 +23,13 @@ public class GeoLocationService {
     private final NominatimClient nominatimClient;
 
     @Async("customExecutor")
-    public void addGeoLocations(List<Listing> listings) {
+    public void addGeoLocations(List<Long> listingIds) {
         log.info("Geolocation start...");
 
-        var targetListings = listingsRepository.findByIdInAndGeoLocationIsNull(
-            listings.stream()
-                .map(l -> l.getId())
-                .toList()
-        );
+        var targetListings = listingsRepository.findByIdInAndGeoLocationIsNullAndDeletedIsFalse(listingIds);
 
         log.info("{} listings are missing geolocations. Querying from Nominatim.", targetListings.size());
+
         int succeeded = 0;
         int failed = 0;
 

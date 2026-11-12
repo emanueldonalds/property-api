@@ -60,7 +60,7 @@ public class ListingController {
         }
 
         var listings = listingService.updateListings(listingsRequest);
-        geoLocationService.addGeoLocations(listings);
+        geoLocationService.addGeoLocations(listings.stream().map(l -> l.getId()).toList());
 
         return ResponseEntity.ok().build();
     }

@@ -17,5 +17,5 @@ public interface ListingsRepository extends CrudRepository<Listing, Long>, JpaSp
     List<Listing> findByDeleted(boolean deleted);
 
     @Transactional(readOnly = true)
-    List<Listing> findByIdInAndGeoLocationIsNull(List<Long> ids);
+    List<Listing> findByIdInAndGeoLocationIsNullAndDeletedIsFalse(List<Long> ids);
 }
