@@ -20,6 +20,8 @@ spring.jpa.show-sql: false
 spring.jpa.properties.hibernate.format_sql: false
 spring.jpa.open-in-view: true
 
+client.nominatim.url: ${PROPERTY_API_NOMINATIM_URL:localhost}
+
 ---
 
 logging.level.root: WARN

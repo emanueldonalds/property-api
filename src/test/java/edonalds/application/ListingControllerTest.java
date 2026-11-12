@@ -1,5 +1,6 @@
 package edonalds.application;
 
+import static edonalds.application.TestHelper.newListing;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,7 +12,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static edonalds.application.TestHelper.newListing;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -27,13 +27,11 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.javafaker.Faker;
 
 import edonalds.model.Listing;
 import edonalds.model.PriceChange;
 import edonalds.model.Size;
 import edonalds.persistence.ListingsRepository;
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
 @ActiveProfiles("test")
@@ -41,7 +39,6 @@ import jakarta.transaction.Transactional;
 @AutoConfigureMockMvc
 @Transactional
 public class ListingControllerTest {
-    Faker faker = new Faker();
 
     @Autowired
     ObjectMapper objectMapper;
@@ -51,9 +48,6 @@ public class ListingControllerTest {
 
     @Autowired
     ListingsRepository listingsRepository;
-
-    @Autowired
-    EntityManager em;
 
     @Test
     void AddNewListingsFromBlankSlate() throws Exception {

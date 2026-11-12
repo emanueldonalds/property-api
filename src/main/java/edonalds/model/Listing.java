@@ -18,12 +18,14 @@ import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
@@ -92,6 +94,9 @@ public class Listing implements TemporalRange {
     @JsonManagedReference
     @Builder.Default
     private Collection<PriceChange> priceHistory = new ArrayList<>();
+
+    @OneToOne(mappedBy = "listing", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    private GeoLocation geoLocation;
 
     public void updatePriceHistory(Integer value) {
         log.debug("Checking if price history needs to be updated on {}. Current price: {}", this.url, this.price);
