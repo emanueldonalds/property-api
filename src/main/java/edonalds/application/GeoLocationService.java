@@ -48,7 +48,7 @@ public class GeoLocationService {
         geoLocationBuilder.listing(listing);
         geoLocationBuilder.geocodingService("Nominatim");
 
-        var request = new NominatimRequest(listing.getAddress(), "Åland");
+        var request = new NominatimRequest(listing.getAddress() + ", Åland");
         var searchResult = nominatimClient.search(request);
 
         if (searchResult.length == 0) {

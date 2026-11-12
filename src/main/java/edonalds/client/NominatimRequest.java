@@ -1,3 +1,3 @@
 package edonalds.client;
 
-public record NominatimRequest(String street, String county) { }
+public record NominatimRequest(String q) { }

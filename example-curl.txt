@@ -1,0 +1,21 @@
+curl -X PUT http://localhost:10000/listings \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: abc123" \
+  -d '[{
+    "agency": "Nordic Real Estate",
+    "name": "Cozy 3-Room Apartment in Mariehamn",
+    "address": "Nygatan 1, Mariehamn",
+    "url": "https://example.com/listings/aland-001",
+    "price": 245000,
+    "buildYear": 2012,
+    "monthlyCharge": 285.50,
+    "rooms": 3,
+    "visibility": ["PUBLIC", "FEATURED"],
+    "deleted": false,
+    "firstSeen": "2026-06-01T10:00:00Z",
+    "lastSeen": "2026-06-06T15:30:00Z",
+    "size": {
+      "value": 75.5,
+      "unit": "m2"
+    }
+  }]'

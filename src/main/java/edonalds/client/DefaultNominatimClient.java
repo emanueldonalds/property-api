@@ -36,8 +36,7 @@ public class DefaultNominatimClient implements NominatimClient {
     public NominatimResponse[] search(NominatimRequest request) {
         var uri = UriComponentsBuilder.fromUriString(url)
             .path("/search")
-            .queryParam("street", request.street())
-            .queryParam("county", request.county())
+            .queryParam("q", request.q())
             .encode(StandardCharsets.UTF_8)
             .build()
             .toUri();
