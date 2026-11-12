@@ -42,8 +42,7 @@ public class GeoLocationService {
 
             if ("SUCCESS".equals(geoLocation.getQueryResult())) {
                 succeeded++;
-            }
-            else {
+            } else {
                 failed++;
             }
         }
@@ -59,18 +58,16 @@ public class GeoLocationService {
         geoLocationBuilder.listing(listing);
         geoLocationBuilder.geocodingService("Nominatim");
 
-        var request = new NominatimRequest(cleanAddress(listing.getAddress()));
+        var request = new NominatimRequest(AddressCleaner.clean(listing.getAddress()));
 
-        log.info("Finding geolocation for listing {} with address: {}, using cleaned address: {}.", 
-                listing.getId(), listing.getAddress(), request.q());
+        log.info("Finding geolocation for listing {} with address: {}, using cleaned address: {}.",
+            listing.getId(), listing.getAddress(), request.q());
 
         var searchResult = nominatimClient.search(request);
 
-
         if (searchResult.length == 0) {
             geoLocationBuilder.queryResult("FAILURE");
-        }
-        else {
+        } else {
             var first = searchResult[0];
 
             geoLocationBuilder.queryResult("SUCCESS");
@@ -83,25 +80,4 @@ public class GeoLocationService {
         listing.setGeoLocation(geoLocation);
         return geoLocation;
     }
-
-    private String cleanAddress(String rawAddress) {
-    if (rawAddress == null) {
-        return "";
-    }
-    
-    // Remove postal code patterns like "AX-22100" or "22100"
-    String cleaned = rawAddress.replaceAll("(?i)\\b(AX-)?\\d{5}\\b", "");
-    
-    // Remove apartment/staircase designations (e.g., "lgh 5", "B 16", "C 18", "32 C 18" -> keep just street & house number)
-    // Common Finnish/Åland housing formats: "Street 12 A 4", "Street 12 lgh 1", "Street 12 C18"
-    cleaned = cleaned.replaceAll("(?i)\\b(lgh|lokal)\\b.*$", ""); // Removes "lgh ..." onwards
-    cleaned = cleaned.replaceAll("\\s+[A-Ö]\\s+\\d+", "");       // Removes " C 18" or " B 16"
-    cleaned = cleaned.replaceAll("\\s+[A-Ö]\\d+", "");           // Removes " C18"
-    
-    // Clean up extra punctuation, trailing commas, and multiple spaces
-    cleaned = cleaned.replaceAll("[,\\.]+", " ");
-    cleaned = cleaned.replaceAll("\\s+", " ").trim();
-    
-    return cleaned;
-}
 }
