@@ -8,7 +8,7 @@ RUN gradle dependencies
 COPY src/ ./src
 RUN gradle bootJar
 
-FROM openjdk:21-jdk-slim AS final
+FROM eclipse-temurin:21-jdk AS final
 
 COPY --from=build /app/build/libs/*.jar /app/app.jar
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

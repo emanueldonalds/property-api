@@ -6,6 +6,8 @@ services:
     env_file: /etc/envs/property-api.env
     ports:
       - "10000:10000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     profiles: [prod]
 
