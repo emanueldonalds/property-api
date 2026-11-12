@@ -1,7 +1,16 @@
 package edonalds.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.BooleanSupplier;
+import java.util.stream.StreamSupport;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -13,6 +22,7 @@ import org.springframework.test.context.ActiveProfiles;
 import edonalds.client.NominatimClient;
 import edonalds.client.NominatimResponse;
 import edonalds.model.GeoLocation;
+import edonalds.model.Listing;
 import edonalds.persistence.ListingsRepository;
 
 @ActiveProfiles("test")
@@ -29,8 +39,7 @@ public class GeoLocationServiceTest {
     NominatimClient nominatimClient;
 
     @Test
-    void updatesGeoLocationForNewListings() {
-        // Add 3 listings. One of them with geolocation.
+    void updatesGeoLocationForNewListings() throws InterruptedException, ExecutionException, TimeoutException {
         var l1 = TestHelper.newListing("l1");
         var l2 = TestHelper.newListing("l2");
         var l3 = TestHelper.newListing("l3");
@@ -43,23 +52,34 @@ public class GeoLocationServiceTest {
 
         l1.setGeoLocation(existingGeoLocation);
 
-        listingsRepository.save(l1);
+        var saved = listingsRepository.saveAll(List.of(l1, l2, l3));
+        var ids = StreamSupport.stream(saved.spliterator(), false).map(Listing::getId).toList();
 
+        var mockResponse = new NominatimResponse(60.0969078, 19.1234567);
         Mockito
             .when(nominatimClient.search(Mockito.any()))
-            .thenReturn(new NominatimResponse[]{
-                new NominatimResponse(60.0969078, 19.1234567)
-            });
+            .thenReturn(new NominatimResponse[]{mockResponse});
 
-        geoLocationService.addGeoLocation(l1);
-        geoLocationService.addGeoLocation(l2);
-        geoLocationService.addGeoLocation(l3);
+        geoLocationService.addGeoLocations(ids).get(10, TimeUnit.SECONDS);
 
-        assertNotNull(l1.getGeoLocation());
-        assertNotNull(l2.getGeoLocation());
-        assertNotNull(l3.getGeoLocation());
+        Mockito.verify(nominatimClient, Mockito.times(2)).search(Mockito.any());
 
-        assertEquals(existingGeoLocation.getLat(), l1.getGeoLocation().getLat());
-        assertEquals(existingGeoLocation.getLon(), l1.getGeoLocation().getLon());
+        var gl1 = findListing(l1).getGeoLocation();
+        var gl2 = findListing(l2).getGeoLocation();
+        var gl3 = findListing(l3).getGeoLocation();
+
+        assertEquals(existingGeoLocation.getLat(), gl1.getLat());
+        assertEquals(existingGeoLocation.getLon(), gl1.getLon());
+        assertEquals(mockResponse.lat(), gl2.getLat());
+        assertEquals(mockResponse.lon(), gl2.getLon());
+        assertEquals(mockResponse.lat(), gl3.getLat());
+        assertEquals(mockResponse.lon(), gl3.getLon());
+    }
+
+    private Listing findListing(Listing listing) {
+        return listingsRepository.findAll().stream()
+            .filter(l -> l.getUrl().equals(listing.getUrl()))
+            .findFirst()
+            .orElseThrow();
     }
 }

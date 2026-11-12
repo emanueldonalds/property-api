@@ -1,6 +1,7 @@
 package edonalds.application;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,7 @@ public class GeoLocationService {
     private final NominatimClient nominatimClient;
 
     @Async("customExecutor")
-    public void addGeoLocations(List<Long> listingIds) {
+    public CompletableFuture<List<Listing>> addGeoLocations(List<Long> listingIds) {
         log.info("Geolocation start...");
 
         var targetListings = listingsRepository.findByIdInAndGeoLocationIsNullAndDeletedIsFalse(listingIds);
@@ -48,6 +49,8 @@ public class GeoLocationService {
 
         log.info("{} nomanitim requests succeeded, {} failed.", succeeded, failed);
         log.info("Fetching geolocations done.");
+
+        return CompletableFuture.completedFuture(targetListings);
     }
 
     @Transactional
