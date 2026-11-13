@@ -42,7 +42,10 @@ public final class AddressCleaner {
                 result.append(cleaned);
             }
         }
-        return result.toString();
+        if (result.length() == 0) {
+            return "";
+        }
+        return result.append(" Åland").toString();
     }
 
     private static String cutAt(String value, String separator) {
