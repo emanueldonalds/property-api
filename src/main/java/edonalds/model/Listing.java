@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.annotation.CreatedDate;
@@ -105,8 +106,7 @@ public class Listing implements TemporalRange {
             return;
         }
 
-        var lastPrice = this.priceHistory.stream()
-                .collect(Collectors.maxBy(Comparator.comparing(PriceChange::getEffectiveFrom)));
+        var lastPrice = latestPriceChange();
 
         if (value != null && lastPrice.isPresent()) {
             log.debug("Previous price is {}", lastPrice.get().getPrice());
@@ -126,6 +126,21 @@ public class Listing implements TemporalRange {
         this.priceHistory.add(newPrice);
         this.price = value;
         log.debug("Update price to {}. There are now {} price history entries for this listing", value, this.priceHistory.size());
+    }
+
+    private Optional<PriceChange> latestPriceChange() {
+        return this.priceHistory.stream()
+                .collect(Collectors.maxBy(Comparator.comparing(PriceChange::getEffectiveFrom)));
+    }
+
+    public void closePriceHistory() {
+        latestPriceChange()
+                .filter(p -> p.getEffectiveTo() == null)
+                .ifPresent(p -> p.setEffectiveTo(this.lastSeen));
+    }
+
+    public void reopenPriceHistory() {
+        latestPriceChange().ifPresent(p -> p.setEffectiveTo(null));
     }
 
     public boolean equalsByValue(Listing other) {

@@ -125,6 +125,39 @@ public class ListingControllerTest {
     }
 
     @Test
+    void deletingListingClosesItsLastPriceChange() throws Exception {
+        var l1 = newListing("l1");
+        var l2 = newListing("l2");
+
+        putListings(Arrays.asList(l1, l2));
+        putListings(Arrays.asList(l1));
+
+        var deleted = findByName(l2.getName()).get(0);
+        assertTrue(deleted.isDeleted());
+        assertEquals(1, deleted.getPriceHistory().size());
+        var priceChange = deleted.getPriceHistory().iterator().next();
+        assertEquals(deleted.getLastSeen(), priceChange.getEffectiveTo());
+
+        var active = findByName(l1.getName()).get(0);
+        assertNull(active.getPriceHistory().iterator().next().getEffectiveTo());
+    }
+
+    @Test
+    void revivingListingWithSamePriceReopensItsLastPriceChange() throws Exception {
+        var l1 = newListing("l1");
+        var l2 = newListing("l2");
+
+        putListings(Arrays.asList(l1, l2));
+        putListings(Arrays.asList(l1));
+        putListings(Arrays.asList(l1, l2));
+
+        var revived = findByName(l2.getName()).get(0);
+        assertFalse(revived.isDeleted());
+        assertEquals(1, revived.getPriceHistory().size());
+        assertNull(revived.getPriceHistory().iterator().next().getEffectiveTo());
+    }
+
+    @Test
     void listingThatReturnsLongAfterBeingDeletedIsANewListing() throws Exception {
         var l1 = newListing("l1");
         var l2 = newListing("l2");

@@ -200,6 +200,7 @@ public class ListingService {
             var existing = latestDeletedByUrl.remove(candidate.getUrl());
             if (existing != null) {
                 existing.setDeleted(false);
+                existing.reopenPriceHistory();
                 copyValues(existing, candidate);
                 revived.add(existing);
             }
@@ -230,7 +231,10 @@ public class ListingService {
         var deleted = currentListings.stream()
             .filter(l -> !listingsRequest.contains(l))
             .collect(Collectors.toList());
-        deleted.forEach(l -> l.setDeleted(true));
+        deleted.forEach(l -> {
+            l.setDeleted(true);
+            l.closePriceHistory();
+        });
         return deleted;
     }
 }
