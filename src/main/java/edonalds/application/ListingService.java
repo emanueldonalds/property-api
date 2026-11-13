@@ -1,9 +1,12 @@
 package edonalds.application;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class ListingService {
+
+    private static final Duration REVIVE_WINDOW = Duration.ofDays(7);
 
     private final ScrapeHistoryRepository scrapeHistoryRepo;
     private final ListingsRepository listingsRepo;
@@ -96,6 +101,7 @@ public class ListingService {
         log.debug("Number of current listings: {}", currentListings.size());
 
         List<Listing> added = getAdded(listingsRequest, currentListings);
+        List<Listing> revived = reviveRecentlyDeleted(added);
         List<Listing> updated = getUpdated(listingsRequest, currentListings);
         List<Listing> deleted = getDeleted(listingsRequest, currentListings);
         List<Listing> untouched = new ArrayList<Listing>(currentListings).stream()
@@ -105,23 +111,28 @@ public class ListingService {
             .collect(Collectors.toList());
 
         log.debug("Added {}", added.size());
+        log.debug("Revived {}", revived.size());
         log.debug("Updated {}", updated.size());
         log.debug("Deleted {}", deleted.size());
         log.debug("Untouched {}", untouched.size());
 
         log.debug("Added list:");
         added.forEach(l -> log.debug(l.getUrl()));
+        log.debug("Revived list:");
+        revived.forEach(l -> log.debug(l.getUrl()));
         log.debug("Updated list:");
         updated.forEach(l -> log.debug(l.getUrl()));
         log.debug("Deleted list:");
         deleted.forEach(l -> log.debug(l.getUrl()));
 
         setLastSeen(added);
+        setLastSeen(revived);
         setLastSeen(updated);
         setLastSeen(untouched);
 
         List<Listing> result = new ArrayList<Listing>();
         result.addAll(added);
+        result.addAll(revived);
         result.addAll(updated);
         result.addAll(deleted);
         result.addAll(untouched);
@@ -168,6 +179,45 @@ public class ListingService {
             }
         }
         return updated;
+    }
+
+    private List<Listing> reviveRecentlyDeleted(List<Listing> notActive) {
+        if (notActive.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        var cutoff = OffsetDateTime.now().minus(REVIVE_WINDOW);
+        var urls = notActive.stream().map(Listing::getUrl).toList();
+
+        Map<String, Listing> latestDeletedByUrl = listingsRepo.findByDeletedTrueAndUrlInAndLastSeenAfter(urls, cutoff).stream()
+            .collect(Collectors.toMap(
+                Listing::getUrl,
+                Function.identity(),
+                (a, b) -> a.getLastSeen().isAfter(b.getLastSeen()) ? a : b));
+
+        var revived = new ArrayList<Listing>();
+        for (Listing candidate : notActive) {
+            var existing = latestDeletedByUrl.remove(candidate.getUrl());
+            if (existing != null) {
+                existing.setDeleted(false);
+                copyValues(existing, candidate);
+                revived.add(existing);
+            }
+        }
+
+        notActive.removeIf(c -> revived.stream().anyMatch(r -> Objects.equals(r.getUrl(), c.getUrl())));
+        return revived;
+    }
+
+    private void copyValues(Listing target, Listing source) {
+        target.setAgency(source.getAgency());
+        target.setName(source.getName());
+        target.setAddress(source.getAddress());
+        target.setSize(source.getSize());
+        target.setBuildYear(source.getBuildYear());
+        target.setMonthlyCharge(source.getMonthlyCharge());
+        target.setRooms(source.getRooms());
+        target.setVisibility(source.getVisibility() == null ? null : new ArrayList<>(source.getVisibility()));
     }
 
     private ArrayList<Listing> getAdded(List<Listing> listingsRequest, List<Listing> currentListings) {

@@ -13,8 +13,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
@@ -95,27 +97,59 @@ public class ListingControllerTest {
     }
 
     @Test
-    void deleteAndAddBackListing() throws Exception {
+    void listingThatReturnsSoonAfterBeingDeletedIsRevived() throws Exception {
+        var l1 = newListing("l1");
+        var l2 = newListing("l2");
+        var l3 = newListing("l3");
+
+        l2.setPrice(250000);
+        putListings(Arrays.asList(l1, l2, l3));
+        var firstSeen = findByName(l2.getName()).get(0).getFirstSeen();
+
+        putListings(Arrays.asList(l1, l3));
+        assertTrue(findByName(l2.getName()).get(0).isDeleted());
+
+        l2.setPrice(230000);
+        putListings(Arrays.asList(l1, l2, l3));
+        newListings().andExpect(jsonPath("$.data", hasSize(3)));
+
+        var all = listingsRepository.findAll();
+        assertEquals(3, all.size());
+
+        var revived = findByName(l2.getName());
+        assertEquals(1, revived.size());
+        assertFalse(revived.get(0).isDeleted());
+        assertEquals(firstSeen, revived.get(0).getFirstSeen());
+        assertEquals(230000, revived.get(0).getPrice());
+        assertEquals(2, revived.get(0).getPriceHistory().size());
+    }
+
+    @Test
+    void listingThatReturnsLongAfterBeingDeletedIsANewListing() throws Exception {
         var l1 = newListing("l1");
         var l2 = newListing("l2");
         var l3 = newListing("l3");
 
         putListings(Arrays.asList(l1, l2, l3));
         putListings(Arrays.asList(l1, l3));
+
+        var deleted = findByName(l2.getName()).get(0);
+        deleted.setLastSeen(OffsetDateTime.now().minusDays(8));
+        listingsRepository.save(deleted);
+
         putListings(Arrays.asList(l1, l2, l3));
         newListings().andExpect(jsonPath("$.data", hasSize(3)));
 
         var all = listingsRepository.findAll();
         assertEquals(4, all.size());
-        assertEquals(1, all.stream().filter(x -> Objects.equals(x.getName(), l1.getName())).toList().size());
-        assertEquals(2, all.stream().filter(x -> Objects.equals(x.getName(), l2.getName())).toList().size());
-        assertEquals(1, all.stream().filter(x -> Objects.equals(x.getName(), l3.getName())).toList().size());
+        assertEquals(1, findByName(l1.getName()).size());
+        assertEquals(1, findByName(l3.getName()).size());
 
-        var l2s = all.stream()
-                .filter(x -> Objects.equals(x.getName(), l2.getName()))
+        var l2s = findByName(l2.getName()).stream()
                 .sorted(Comparator.comparing(Listing::getFirstSeen))
                 .toList();
 
+        assertEquals(2, l2s.size());
         assertTrue(l2s.get(0).isDeleted());
         assertFalse(l2s.get(1).isDeleted());
     }
@@ -255,6 +289,12 @@ public class ListingControllerTest {
         assertNotNull(priceHistory.get(0).getEffectiveTo());
         assertNotNull(priceHistory.get(1).getEffectiveTo());
         assertNull(priceHistory.get(2).getEffectiveTo());
+    }
+
+    private List<Listing> findByName(String name) {
+        return listingsRepository.findAll().stream()
+                .filter(x -> Objects.equals(x.getName(), name))
+                .toList();
     }
 
     private ResultActions newListings() throws Exception {

@@ -1,5 +1,7 @@
 package edonalds.persistence;
 
+import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.context.annotation.Primary;
@@ -15,6 +17,7 @@ public interface ListingsRepository extends CrudRepository<Listing, Long>, JpaSp
     List<Listing> findAll();
     List<Listing> findAll(Specification<Listing> spec);
     List<Listing> findByDeleted(boolean deleted);
+    List<Listing> findByDeletedTrueAndUrlInAndLastSeenAfter(Collection<String> urls, OffsetDateTime lastSeen);
 
     @Transactional(readOnly = true)
     List<Listing> findByIdInAndGeoLocationIsNullAndDeletedIsFalse(List<Long> ids);
